@@ -10,29 +10,25 @@
                             <el-button @click="newThing" icon="el-icon-plus"></el-button>
                         </div>
                         <div class="clock">
-                            <div>{{time}}</div>
+                            <div></div>
                         </div>
                         <div class="playing">
                             <div class="control">
                                 <span>{{doing}}</span>
                             </div>
-                            <div class="playingTimer">{{down}}</div>
+                            <div class="playingTimer">
+                                {{displayMinutes}}:{{displaySeconds}}</div>
                         </div >
-                        <div class="listGroup">
-                            <ul  style="z-index: 2;" v-for="(item) in list">
+
+                            <ul class="listGroup" style="z-index: 2;" v-for="(item) in list">
                                 <li class="listGroup-item">
-                                    <input type="checkbox"/>
-                                    {{item}}
+                                    <div class="customControl">
+                                        <input type="checkbox"/>
+                                        {{item}}
+                                    </div>
                                     <el-button @click="portalHandle(item)" icon="el-icon-video-play"></el-button>
                                 </li>
                             </ul>
-
-                            <div class="action">
-
-                                <label @dblclick="editHandler" ></label>
-                                <button @click="deleteHandler(index)">刪除</button>
-                            </div>
-                        </div>
 
                     </el-aside>
                     <div class="countDown" style="z-index:100">
@@ -58,9 +54,9 @@
   export default {
       data(){
           return{
-              time:24000,
+              totalSeconds:25 * 60,
               timer: null,
-              timestop:null,
+              started:false,
               down:'',
               temp:'',
               input:'',
@@ -69,35 +65,51 @@
               doing:""
           }
       },
-      mounted() {
-          this.updateTime()
-          this.timer = setInterval(() => {
-              // console.log(123)
-              this.updateTime()
-          }, 1000)
 
-      },
-      beforeDestroy() {
-          clearInterval(this.timer)
-          this.timestop=setInterval(this.countDown, 1000);
+          // this.updateTime()
+          // this.timer = setInterval(() => {
+          //     // console.log(123)
+          //     this.updateTime()
+          // }, 1000)
+      computed:{
+            dataTypeChange: function () {
+                return this.time / 1000
+            },
+          displayMinutes(){
+                const minutes = Math.floor(this.totalSeconds / 60)
+                return this.formatTime(minutes)
+          },
+          displaySeconds(){
+              const seconds = this.totalSeconds % 60
+              return this.formatTime(seconds)
+          }
       },
       methods:{
-          updateTime() {
-              let date = new Date();
-              this.time = date.toTimeString().substr(0, 8)
+          formatTime(time){
+              if(time < 10){
+                  return '0' +time
+              }
+              return time.toString()
           },
           countDown(){
-                if(this.time == 0){
-                    clearInterval(this.timestop)
-                }else {
-                    this.time/1000
-                }
+              const vm = this
 
+              if(vm.started === false){
+                  vm.started = true
+                  vm.timer=setInterval(function () {
+                      if(vm.time <= 0){
+                          return clearInterval(vm.timer)
+                      }
+                      vm.totalSeconds -= 1
+                  }, 1000)
+              }else{
+                  this.started = false
+                  this.stop()
+              }
           },
-          // stopTime(){
-          //     if(this.countDown)
-          //     this.temp = this.down
-          // },
+          stop(){
+              clearInterval(this.timer)
+          },
           newThing(){
               if(this.input){
                   this.list.push(this.input)
@@ -106,12 +118,6 @@
           },
           portalHandle(item){
               this.doing = item
-          },
-          editHandler(){
-             this.edit = this.list
-          },
-          deleteHandler(index){
-                  this.list.splice(index,1)
           },
           showHandle(){
               alert(0.0)
@@ -171,6 +177,7 @@
         padding-left: 4rem;
         font-size: 1.5rem;
         justify-content: space-between;
+
     }
     .playing{
     margin-top: 50px;
@@ -183,12 +190,20 @@
     }
     .listGroup{
         position: relative;
-        top:150px;
-        display: flex;
-        flex-direction: column;
+        top:250px;
+        padding-left: 0;
+        margin-bottom: 0;
     }
-    ul{
+    .listGroup-item{
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        position: relative;
+    }
+    ul {
         list-style: none;
+        border-bottom: 1px solid #a4da89;
+        width: 550px;
     }
     .countDown{
         position: absolute;
@@ -217,6 +232,7 @@
         margin-right: 50px;;
     }
     .iconAdjust >div:hover{
+        margin-bottom: 10px;
         font-size: xxx-large;
     }
     .start{
@@ -236,6 +252,7 @@
         top: 50px;
         right: 50px;
         transform: translate(-160%,145%);
+        /*transition: all 1.5s;*/
         width: 150px;
         height: 150px;
         background-color: #00ffff;
